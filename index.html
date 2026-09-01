@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makeolio | Create Your Space</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Heavily Styled, Hardware-Accelerated CSS */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800&display=swap');
+        
+        :root {
+            --bg-base: #09090b;
+            --glass-bg: rgba(24, 24, 27, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text-main: #fafafa;
+            --text-muted: #a1a1aa;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+        
+        body {
+            background-color: var(--bg-base); color: var(--text-main);
+            min-height: 100vh; overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(147, 51, 234, 0.15), transparent 25%);
+            background-attachment: fixed;
+        }
+
+        /* View Router */
+        .view { display: none; padding: 2rem; max-width: 1400px; margin: 0 auto; min-height: 100vh; }
+        .view.active { display: flex; flex-direction: column; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Premium Glassmorphism UI */
+        .glass-panel {
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 24px;
+            padding: 3rem; box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+            width: 100%; max-width: 500px; margin: auto;
+        }
+
+        h1 { font-size: 4rem; font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; 
+             background: linear-gradient(135deg, #fff, #a1a1aa); -webkit-background-clip: text; color: transparent; }
+        h2 { font-size: 2.2rem; font-weight: 500; margin-bottom: 1rem; }
+        p { color: var(--text-muted); line-height: 1.7; font-size: 1.1rem; margin-bottom: 2rem; }
+
+        /* Form Controls */
+        input {
+            width: 100%; padding: 1.2rem; margin-bottom: 1.2rem;
+            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border);
+            color: white; border-radius: 12px; font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); outline: none; }
+
+        button {
+            background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; border: none;
+            padding: 1.2rem 2rem; border-radius: 12px; font-weight: 800; font-size: 1.1rem;
+            cursor: pointer; transition: all 0.3s ease; width: 100%;
+            box-shadow: 0 10px 25px -5px var(--accent-glow);
+        }
+        button:hover { transform: translateY(-3px); box-shadow: 0 15px 35px -5px var(--accent-glow); filter: brightness(1.1); }
+
+        /* High-End Builder Layout */
+        .builder-grid { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; flex: 1; margin-top: 2rem; }
+        .builder-sidebar { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; }
+        
+        .tabs { display: flex; gap: 0.5rem; background: rgba(0,0,0,0.4); padding: 0.5rem; border-radius: 12px; margin-bottom: 2rem; }
+        .tab-btn { flex: 1; padding: 0.8rem; border-radius: 8px; background: transparent; color: var(--text-muted); font-size: 0.9rem; box-shadow: none; border: none; }
+        .tab-btn.active { background: var(--accent); color: white; }
+
+        /* Draggable Nodes */
+        .node-item {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem; border-radius: 12px; cursor: grab; font-weight: 500;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; transition: all 0.2s;
+        }
+        .node-item:active { cursor: grabbing; transform: scale(0.95); }
+        .node-item:hover { background: rgba(255,255,255,0.1); border-color: var(--accent); }
+
+        /* Preview Workspace */
+        #workspace {
+            background: #ffffff; color: #09090b; border-radius: 20px; padding: 4rem;
+            overflow-y: auto; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        
+        /* Node Editing Target Styles */
+        .editable-node { position: relative; border: 2px dashed transparent; padding: 1rem; border-radius: 12px; transition: all 0.3s; margin-bottom: 1rem; }
+        .edit-mode .editable-node:hover { border-color: #d4d4d8; background: #f4f4f5; cursor: crosshair; }
+        .edit-mode .editable-node.drag-over { border-color: var(--accent); background: #eff6ff; transform: scale(1.02); }
+        
+        /* Trigger Indicators */
+        .trigger-badge {
+            position: absolute; top: -10px; right: 10px; background: var(--accent); color: white;
+            font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; font-weight: 800; display: none;
+        }
+        .edit-mode .editable-node[data-trigger] .trigger-badge { display: block; }
+        
+        /* Trigger Animations (Hardware Accelerated) */
+        .preview-mode .trigger-fade-in { animation: buildFadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .preview-mode .trigger-fade-out { animation: buildFadeOut 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes buildFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes buildFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="view-landing" class="view active">
+        <div class="glass-panel" style="margin-top: 15vh; text-align: center;">
+            <h1>Makeolio</h1>
+            <p>The highly-opinionated, AI-driven portfolio builder. Just drop your details and drag your nodes.</p>
+            <button onclick="switchView('view-login')">Start Building</button>
+        </div>
+    </div>
+
+    <div id="view-login" class="view">
+        <div class="glass-panel" style="margin-top: 15vh;">
+            <h2>Secure Login</h2>
+            <p>Enter your email to authenticate via Supabase.</p>
+            <input type="email" id="email-input" placeholder="hello@example.com">
+            <button onclick="handleLogin()">Send Magic Link</button>
+            <p id="login-msg" style="margin-top: 1rem; color: #34d399; display: none; font-weight: 500;">Link dispatched! Check your inbox.</p>
+        </div>
+    </div>
+
+    <div id="view-generate" class="view">
+        <div class="glass-panel" style="margin-top: 10vh;">
+            <h2>Your Details</h2>
+            <input type="text" id="user-full-name" placeholder="Full Name (Required)" required>
+            <input type="number" id="user-age" placeholder="Age (Required)" required>
+            <input type="text" id="user-location" placeholder="City, Country (Recommended)">
+            <button id="gen-btn" onclick="generatePortfolio()">Generate Portfolio</button>
+        </div>
+    </div>
+
+    <div id="view-builder" class="view">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Makeolio Studio</h2>
+            <button onclick="publishPortfolio()" style="width: auto; padding: 0.8rem 2rem;">🚀 Publish Project</button>
+        </div>
+        
+        <div class="builder-grid">
+            <div class="builder-sidebar">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="setMode('edit')">Nodes</button>
+                    <button class="tab-btn" onclick="setMode('preview')">Preview</button>
+                </div>
+                
+                <div id="node-tools">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: white;">Animation Triggers</h3>
+                    <p style="font-size: 0.85rem; margin-bottom: 1.5rem; color: var(--text-muted);">Drag a node and drop it onto an element.</p>
+                    
+                    <div class="node-item" draggable="true" ondragstart="dragStart(event, 'trigger-fade-in')">
+                        ⚡ Fade In Node
+                    </div>
+                    <div class="node-item" draggable="true" ondragstart="dragStart(event, 'trigger-fade-out')">
+                        🕳️ Fade Out Node
+                    </div>
+                </div>
+            </div>
+            
+            <div id="workspace" class="edit-mode">
+                </div>
+        </div>
+    </div>
+
+    <div id="view-portfolio" class="view" style="padding: 0; max-width: 100%;">
+        <div id="public-canvas" class="preview-mode" style="background: white; color: black; min-height: 100vh; padding: 5rem 2rem;">
+            </div>
+    </div>
+
+    <script>
+        // --- 1. Supabase Init ---
+        // Ensure you replace with your actual URL and Key
+        const supabaseUrl = 'https://YOUR_PROJECT_ID.supabase.co'; 
+        const supabaseKey = 'sb_publishable_WciVAE3r35hMRLtZ_rjn5w_3D7lpYFY';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentUser = null;
+        let generatedFullName = "";
+
+        // --- 2. Routing Logic ---
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        async function initRouter() {
+            const params = new URLSearchParams(window.location.search);
+            const usernameQuery = params.get('name');
+
+            // Unique Name Lookup
+            if (usernameQuery) {
+                switchView('view-portfolio');
+                const { data } = await supabase.from('portfolios')
+                    .select('portfolio_data').eq('unique_username', usernameQuery).single();
+                
+                if (data) {
+                    document.getElementById('public-canvas').innerHTML = data.portfolio_data.html;
+                } else {
+                    document.getElementById('public-canvas').innerHTML = "<h2 style='text-align:center;'>Portfolio not found.</h2>";
+                }
+                return;
+            }
+
+            // Auth Check
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user.id;
+                switchView('view-generate');
+            } else {
+                switchView('view-landing');
+            }
+        }
+        window.onload = initRouter;
+
+        // --- 3. Auth ---
+        async function handleLogin() {
+            const email = document.getElementById('email-input').value;
+            const { error } = await supabase.auth.signInWithOtp({ email });
+            if (!error) document.getElementById('login-msg').style.display = 'block';
+        }
+
+        // --- 4. AI Generation ---
+        async function generatePortfolio() {
+            const name = document.getElementById('user-full-name').value;
+            const age = document.getElementById('user-age').value;
+            const loc = document.getElementById('user-location').value;
+            const btn = document.getElementById('gen-btn');
+
+            if (!name || !age) return alert("Name and age required.");
+            generatedFullName = name; // Save for URL generation later
+            btn.innerText = "Analyzing Context...";
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, age, location: loc })
+                });
+                const data = await res.json();
+                
+                // Inject JSON into HTML template
+                const ws = document.getElementById('workspace');
+                ws.innerHTML = `
+                    <div class="editable-node" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+                        <span class="trigger-badge"></span>
+                        <h1 style="color:#09090b;">${data.hero?.greeting || 'Hello'}</h1>
+                        <h2 style="color:#71717a;">${data.hero?.tagline || ''}</h2>
+                    </div>
+                    <div class="editable-node" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+                        <span class="trigger-badge"></span>
+                        <h3 style="margin-bottom: 1rem; color:#09090b;">About</h3>
+                        <p style="color:#3f3f46;">${data.about}</p>
+                    </div>
+                    <div class="editable-node" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+                        <span class="trigger-badge"></span>
+                        <h3 style="margin-bottom: 1rem; color:#09090b;">Featured Projects</h3>
+                        ${data.projects?.map(p => `<div style="margin-bottom:1rem; color:#3f3f46;"><strong>${p.name}</strong>: ${p.description}</div>`).join('')}
+                    </div>
+                `;
+                switchView('view-builder');
+            } catch (err) {
+                alert("Generation error. Check API logs.");
+            }
+            btn.innerText = "Generate Portfolio";
+        }
+
+        // --- 5. Visual Builder Logic ---
+        function setMode(mode) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const ws = document.getElementById('workspace');
+            const tools = document.getElementById('node-tools');
+            
+            if (mode === 'preview') {
+                ws.classList.replace('edit-mode', 'preview-mode');
+                tools.style.display = 'none';
+                // Trigger re-flow to restart animations
+                ws.innerHTML = ws.innerHTML;
+            } else {
+                ws.classList.replace('preview-mode', 'edit-mode');
+                tools.style.display = 'block';
+            }
+        }
+
+        // --- 6. Drag and Drop Nodes ---
+        function dragStart(ev, triggerClass) { ev.dataTransfer.setData("trigger", triggerClass); }
+        function dragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        
+        function drop(ev) {
+            ev.preventDefault();
+            const target = ev.currentTarget;
+            target.classList.remove('drag-over');
+            
+            const triggerClass = ev.dataTransfer.getData("trigger");
+            if (triggerClass) {
+                // Clear old triggers, add new
+                target.classList.remove('trigger-fade-in', 'trigger-fade-out');
+                target.classList.add(triggerClass);
+                target.setAttribute('data-trigger', triggerClass);
+                
+                // Update Badge text visually
+                const badge = target.querySelector('.trigger-badge');
+                if(badge) badge.innerText = triggerClass === 'trigger-fade-in' ? '⚡ Fade In' : '🕳️ Fade Out';
+            }
+        }
+
+        // --- 7. Dynamic URL & Publishing ---
+        async function publishPortfolio() {
+            // 1. Generate Unique Name (e.g. Aarav Kasula -> aaravkasula89213)
+            const baseName = generatedFullName.replace(/\s+/g, '').toLowerCase();
+            const randomDigits = Math.floor(10000 + Math.random() * 90000);
+            const uniqueUsername = `${baseName}${randomDigits}`;
+
+            // 2. Extract cleanly formatted HTML
+            const canvasHTML = document.getElementById('workspace').innerHTML;
+
+            const { error } = await supabase.from('portfolios').upsert({
+                user_id: currentUser,
+                full_name: generatedFullName,
+                unique_username: uniqueUsername,
+                portfolio_data: { html: canvasHTML }
+            });
+
+            if (error) {
+                alert("Database Error: " + error.message);
+            } else {
+                const finalUrl = `${window.location.origin}/portfolio?name=${uniqueUsername}`;
+                alert(`Success! Your live link is: \n${finalUrl}`);
+                window.location.href = `/?name=${uniqueUsername}`;
+            }
+        }
+    </script>
+</body>
+</html>
