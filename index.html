@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Folyo — Your portfolio, written by AI. Styled by you.</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e18; --bg2:#0e1428; --card:rgba(255,255,255,.045); --border:rgba(255,255,255,.09);
+    --text:#eef1ff; --muted:#9aa4c7; --a1:#7c5cff; --a2:#2dd4ff; --a3:#ff6bd5; --radius:20px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;overflow-x:hidden;}
+  a{color:inherit;}
+  .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.35;z-index:0;pointer-events:none;animation:float 16s ease-in-out infinite;}
+  .b1{width:520px;height:520px;background:var(--a1);top:-160px;left:-160px;}
+  .b2{width:480px;height:480px;background:var(--a2);top:200px;right:-200px;animation-delay:-6s;}
+  .b3{width:420px;height:420px;background:var(--a3);bottom:-180px;left:30%;animation-delay:-11s;}
+  @keyframes float{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,-40px);}}
+
+  nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+    padding:18px 6vw;backdrop-filter:blur(14px);background:rgba(10,14,24,.55);border-bottom:1px solid var(--border);}
+  .brand{font-weight:800;font-size:20px;letter-spacing:-.5px;}
+  .brand span{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;color:transparent;}
+  .navlinks{display:flex;gap:28px;align-items:center;}
+  .navlinks a.link{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;}
+  .navlinks a.link:hover{color:var(--text);}
+
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:14.5px;border-radius:12px;
+    padding:13px 24px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:transform .18s ease,box-shadow .18s ease;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(120deg,var(--a1),var(--a2));color:#0a0e18;box-shadow:0 10px 30px -8px rgba(124,92,255,.6);}
+  .btn-primary:hover{box-shadow:0 14px 36px -6px rgba(124,92,255,.75);}
+  .btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--a2);}
+
+  main{position:relative;z-index:1;}
+  .hero{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:center;max-width:1180px;margin:0 auto;padding:90px 6vw 60px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+    padding:7px 14px;border-radius:999px;font-size:13px;color:var(--a2);margin-bottom:22px;}
+  h1{font-size:clamp(34px,4.6vw,56px);line-height:1.06;margin:0 0 20px;font-weight:900;letter-spacing:-1.5px;}
+  h1 .grad{background:linear-gradient(100deg,var(--a1),var(--a2) 60%,var(--a3));-webkit-background-clip:text;color:transparent;}
+  .lead{font-size:18px;color:var(--muted);line-height:1.65;max-width:520px;margin-bottom:34px;}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:26px;}
+  .microcopy{font-size:13px;color:var(--muted);}
+
+  .mock{position:relative;}
+  .browser{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.7);animation:rise .9s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(30px) scale(.98);}to{opacity:1;transform:none;}}
+  .browser-bar{display:flex;gap:6px;padding:12px 14px;border-bottom:1px solid var(--border);}
+  .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15);}
+  .mock-body{padding:34px 28px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(124,92,255,.25),transparent 60%);}
+  .mock-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 14px;background:linear-gradient(135deg,var(--a1),var(--a2));
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#0a0e18;font-size:20px;}
+  .mock-body h3{margin:0 0 6px;font-size:20px;}
+  .mock-body p{margin:0;color:var(--muted);font-size:13px;}
+  .mock-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:22px 28px 30px;}
+  .mock-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:left;}
+  .mock-card b{font-size:13px;}
+  .mock-card p{font-size:11.5px;color:var(--muted);margin:6px 0 0;}
+  .mock-badge{position:absolute;bottom:-16px;right:20px;background:var(--bg2);border:1px solid var(--border);
+    padding:10px 16px;border-radius:12px;font-size:12.5px;box-shadow:0 12px 30px -12px rgba(0,0,0,.6);display:flex;gap:8px;align-items:center;}
+
+  section.block{max-width:1180px;margin:0 auto;padding:70px 6vw;}
+  .section-head{text-align:center;max-width:600px;margin:0 auto 46px;}
+  .section-head .eyebrow{margin-bottom:14px;}
+  .section-head h2{font-size:clamp(26px,3.4vw,38px);margin:0 0 12px;font-weight:800;letter-spacing:-1px;}
+  .section-head p{color:var(--muted);font-size:16px;}
+
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+  .step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px 22px;position:relative;}
+  .step .num{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--a1),var(--a2));
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#0a0e18;margin-bottom:16px;}
+  .step h4{margin:0 0 8px;font-size:16px;}
+  .step p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.55;}
+
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .feature{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:transform .2s,border-color .2s;}
+  .feature:hover{transform:translateY(-4px);border-color:var(--a2);}
+  .feature .ico{font-size:26px;margin-bottom:14px;display:inline-block;}
+  .feature h4{margin:0 0 8px;font-size:16.5px;}
+  .feature p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.6;}
+
+  .cta-banner{max-width:1180px;margin:20px auto 90px;padding:60px 6vw;border-radius:28px;text-align:center;
+    background:linear-gradient(120deg,rgba(124,92,255,.18),rgba(45,212,255,.14));border:1px solid var(--border);}
+  .cta-banner h2{font-size:clamp(24px,3.4vw,34px);margin:0 0 14px;font-weight:800;}
+  .cta-banner p{color:var(--muted);margin:0 0 26px;}
+
+  footer{border-top:1px solid var(--border);padding:30px 6vw;display:flex;justify-content:space-between;
+    align-items:center;color:var(--muted);font-size:13px;flex-wrap:wrap;gap:10px;}
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:1fr;padding-top:60px;}
+    .steps,.features{grid-template-columns:1fr 1fr;}
+    .navlinks .link{display:none;}
+  }
+  @media (max-width:560px){ .steps,.features{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+  <nav>
+    <div class="brand">✦ Fol<span>yo</span></div>
+    <div class="navlinks">
+      <a class="link" href="#how">How it works</a>
+      <a class="link" href="#features">Features</a>
+      <a class="btn btn-ghost" href="/login">Log in</a>
+      <a class="btn btn-primary" href="/login">Get started free →</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">⚡ AI research + Gemini-generated content</span>
+        <h1>Your portfolio,<br><span class="grad">written by AI.</span><br>Styled by you.</h1>
+        <p class="lead">Tell Folyo who you are. We research you, write your copy, and generate a full portfolio in seconds — then you fine-tune it in a drag-and-drop editor with real animation triggers. No code, ever.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="/login">Build my portfolio →</a>
+          <a class="btn btn-ghost" href="#demo">See how it looks</a>
+        </div>
+        <p class="microcopy">No password required · Free to start · Publish in minutes</p>
+      </div>
+      <div class="mock" id="demo">
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="mock-body">
+            <div class="mock-avatar">JS</div>
+            <h3>Jordan Serrano</h3>
+            <p>Frontend Engineer · Austin, TX</p>
+          </div>
+          <div class="mock-grid">
+            <div class="mock-card"><b>🚀 Nimbus</b><p>Realtime collab whiteboard, 4k GitHub stars.</p></div>
+            <div class="mock-card"><b>🎯 Fetchly</b><p>API testing tool used by 3 YC startups.</p></div>
+            <div class="mock-card"><b>🎓 UT Austin</b><p>B.S. Computer Science, 2023</p></div>
+            <div class="mock-card"><b>🧩 Skills</b><p>React · TypeScript · Design Systems</p></div>
+          </div>
+        </div>
+        <div class="mock-badge">✨ Generated in 14s</div>
+      </div>
+    </section>
+
+    <section class="block" id="how">
+      <div class="section-head">
+        <span class="eyebrow">The flow</span>
+        <h2>Four steps to live</h2>
+        <p>From blank page to a published portfolio faster than it takes to write a bio yourself.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="num">1</div><h4>Sign in with email</h4><p>No passwords. A magic link from Supabase Auth gets you in instantly.</p></div>
+        <div class="step"><div class="num">2</div><h4>Tell us about you</h4><p>Name, age, and — if you want smarter results — your location, school, and projects.</p></div>
+        <div class="step"><div class="num">3</div><h4>AI researches & writes</h4><p>We search the web for context and let Gemini turn it into clean, structured content.</p></div>
+        <div class="step"><div class="num">4</div><h4>Customize & publish</h4><p>Drag, edit, add animation triggers, then publish to your own shareable link.</p></div>
+      </div>
+    </section>
+
+    <section class="block" id="features">
+      <div class="section-head">
+        <span class="eyebrow">Under the hood</span>
+        <h2>Everything you need, nothing you don't</h2>
+        <p>Built to be fast, clean, and genuinely fun to use.</p>
+      </div>
+      <div class="features">
+        <div class="feature"><span class="ico">🔎</span><h4>Real research</h4><p>Pulls context about you from the web via live search, so your copy isn't generic filler.</p></div>
+        <div class="feature"><span class="ico">🧠</span><h4>Gemini-powered writing</h4><p>A medium-thinking Gemini model structures your story into clean JSON — no messy AI-generated code.</p></div>
+        <div class="feature"><span class="ico">🎛️</span><h4>No-code visual editor</h4><p>Click any text to edit it, drag sections to reorder, tweak colors and fonts — instantly.</p></div>
+        <div class="feature"><span class="ico">✨</span><h4>Animation triggers</h4><p>Drag a "Fade In" or "Fade Out" trigger onto any section and set the timing yourself.</p></div>
+        <div class="feature"><span class="ico">🚀</span><h4>One-click publish</h4><p>Get a clean, shareable link the moment you're happy with it — edit again anytime.</p></div>
+        <div class="feature"><span class="ico">🔒</span><h4>Secure by default</h4><p>Supabase Auth + Row Level Security means your draft is only ever visible to you until published.</p></div>
+      </div>
+    </section>
+
+    <section class="cta-banner">
+      <h2>Your story deserves better than a plain resume.</h2>
+      <p>Build a portfolio that actually looks like you made it with a design team.</p>
+      <a class="btn btn-primary" href="/login">Get started — it's free →</a>
+    </section>
+  </main>
+
+  <footer>
+    <div>✦ Folyo — built with Supabase, Gemini & Vercel</div>
+    <div>© <span id="yr"></span> Folyo</div>
+  </footer>
+  <script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>
