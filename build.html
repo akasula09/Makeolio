@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Build your portfolio · Folyo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--bg:#0a0e18;--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.09);--text:#eef1ff;--muted:#9aa4c7;
+    --a1:#7c5cff;--a2:#2dd4ff;--radius:18px;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh;}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:16px 5vw;border-bottom:1px solid var(--border);}
+  .brand{font-weight:800;font-size:18px;} .brand span{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;color:transparent;}
+  .logout{background:none;border:1px solid var(--border);color:var(--muted);padding:8px 14px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13px;}
+  .logout:hover{color:var(--text);border-color:var(--a2);}
+
+  .dots{display:flex;justify-content:center;gap:10px;padding:26px 0 6px;}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--border);transition:background .3s;}
+  .dot.active{background:linear-gradient(120deg,var(--a1),var(--a2));width:24px;border-radius:6px;}
+
+  main.wizard{max-width:640px;margin:0 auto;padding:20px 20px 90px;}
+  .step{display:none;animation:in .35s ease both;}
+  .step.active{display:block;}
+  @keyframes in{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:34px;}
+  h2{margin:0 0 6px;font-size:22px;font-weight:800;}
+  .hint{color:var(--muted);font-size:14px;margin:0 0 26px;}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 8px;}
+  .req::after{content:' *';color:#ff8ab0;}
+  input,textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--text);font-size:14.5px;font-family:inherit;margin-bottom:18px;}
+  textarea{resize:vertical;min-height:70px;}
+  input:focus,textarea:focus{outline:none;border-color:var(--a2);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .actions{display:flex;justify-content:space-between;gap:12px;margin-top:6px;}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:14.5px;border-radius:12px;padding:12px 22px;transition:opacity .2s,transform .15s;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(120deg,var(--a1),var(--a2));color:#0a0e18;}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+
+  .loading-wrap{text-align:center;padding:60px 20px;}
+  .spinner{width:52px;height:52px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--a2);
+    margin:0 auto 26px;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loadStatus{color:var(--muted);font-size:14.5px;transition:opacity .3s;}
+
+  .preview-shell{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#0b0f19;}
+  .preview-toolbar{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);}
+  .preview-toolbar b{font-size:14px;}
+  #previewMount{max-height:70vh;overflow:auto;}
+  .final-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;}
+  .modal{background:#101627;border:1px solid var(--border);border-radius:18px;padding:28px;width:100%;max-width:420px;}
+  .modal h3{margin:0 0 6px;} .modal p.hint{margin-bottom:18px;}
+  .slug-row{display:flex;align-items:center;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:4px 4px 4px 14px;margin-bottom:8px;}
+  .slug-row span{color:var(--muted);font-size:13.5px;white-space:nowrap;}
+  .slug-row input{border:none;background:transparent;margin:0;padding:10px 8px;}
+  #slugMsg{font-size:12.5px;min-height:16px;margin-bottom:14px;}
+  .ok{color:#7CFFB2;} .bad{color:#ff8a8a;}
+  .success-box{text-align:center;padding:10px 0;}
+  .link-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);
+    border-radius:12px;padding:10px 14px;font-size:13px;margin:18px 0;word-break:break-all;}
+  .copy-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);cursor:pointer;font-size:12px;flex-shrink:0;}
+
+  /* ---- Portfolio render engine styles ---- */
+  .pf-wrap{font-family:var(--p-font,'Inter'),sans-serif;background:var(--p-bg,#0b0f19);color:#eef1ff;padding-bottom:40px;}
+  .pf-hero{text-align:center;padding:60px 20px 34px;background:radial-gradient(circle at 50% -10%,var(--p-primary,#7c5cff)33,transparent 60%);}
+  .pf-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:24px;background:linear-gradient(135deg,var(--p-primary,#7c5cff),var(--p-accent,#2dd4ff));color:#0b0f19;}
+  .pf-hero h1{font-size:clamp(24px,4vw,38px);margin:0 0 8px;font-weight:800;}
+  .pf-tagline{color:#b8c0e6;font-size:16px;max-width:520px;margin:0 auto;}
+  .pf-loc{margin-top:8px;color:#8a93bd;font-size:13px;}
+  .pf-about{max-width:640px;margin:0 auto;padding:26px 24px;text-align:center;}
+  .pf-about h2, .pf-section h2{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--p-accent,#2dd4ff);margin:0 0 14px;text-align:center;}
+  .pf-about p{font-size:15.5px;line-height:1.7;color:#cdd3f0;}
+  .pf-section{max-width:860px;margin:0 auto;padding:30px 24px;}
+  .pf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+  .pf-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px;}
+  .pf-card h3{margin:0 0 6px;font-size:16px;}
+  .pf-card p{color:#b8c0e6;font-size:13.5px;line-height:1.55;margin:0 0 10px;}
+  .pf-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .pf-tag{font-size:11.5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:#dfe3ff;}
+  .pf-link{color:var(--p-accent,#2dd4ff);text-decoration:none;font-size:13px;font-weight:600;}
+  .pf-timeline{display:flex;flex-direction:column;gap:18px;border-left:2px solid rgba(255,255,255,.1);padding-left:20px;}
+  .pf-titem{position:relative;}
+  .pf-titem::before{content:'';position:absolute;left:-26px;top:4px;width:9px;height:9px;border-radius:50%;background:var(--p-primary,#7c5cff);}
+  .pf-titem h3{margin:0;font-size:15px;} .pf-titem .pf-sub{color:var(--p-accent,#2dd4ff);font-size:12.5px;margin:2px 0;}
+  .pf-titem p{color:#b8c0e6;font-size:13px;}
+  .pf-tagcloud{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+  .pf-tagcloud .pf-tag{font-size:13px;padding:7px 14px;}
+  .pf-contact{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+  .pf-cbtn{padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,var(--p-primary,#7c5cff),var(--p-accent,#2dd4ff));
+    color:#0b0f19;font-weight:700;text-decoration:none;font-size:13px;}
+  .fade-target{opacity:0;transform:translateY(20px);transition:opacity var(--dur,600ms) ease,transform var(--dur,600ms) ease;}
+  .fade-target.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">✦ Fol<span>yo</span></div>
+  <button class="logout" id="logoutBtn">Log out</button>
+</nav>
+
+<div class="dots" id="dots">
+  <div class="dot active" data-step="1"></div><div class="dot" data-step="2"></div>
+  <div class="dot" data-step="3"></div><div class="dot" data-step="4"></div>
+</div>
+
+<main class="wizard">
+
+  <section class="step active" id="step-1">
+    <div class="card">
+      <h2>Let's start with the basics</h2>
+      <p class="hint">Just two things we truly need.</p>
+      <label class="req" for="f-name">Full name</label>
+      <input id="f-name" placeholder="Jordan Serrano">
+      <label class="req" for="f-age">Age</label>
+      <input id="f-age" type="number" min="1" max="120" placeholder="24">
+      <div class="actions"><span></span><button class="btn btn-primary" id="toStep2" disabled>Continue →</button></div>
+    </div>
+  </section>
+
+  <section class="step" id="step-2">
+    <div class="card">
+      <h2>A bit more context <span style="color:var(--muted);font-weight:400;font-size:14px;">(optional, but recommended)</span></h2>
+      <p class="hint">The more you share, the better the AI can research and write about you.</p>
+      <label>Where do you live?</label>
+      <input id="f-location" placeholder="Austin, TX">
+      <label>Short bio / summary</label>
+      <textarea id="f-bio" placeholder="What do you do, and what do you care about?"></textarea>
+      <label>Schooling</label>
+      <input id="f-school" placeholder="B.S. Computer Science, UT Austin">
+      <label>Projects (one per line — "Title - short description")</label>
+      <textarea id="f-projects" placeholder="Nimbus - Realtime collaborative whiteboard&#10;Fetchly - API testing tool"></textarea>
+      <label>Links (comma or newline separated — GitHub, LinkedIn, email, website)</label>
+      <textarea id="f-links" placeholder="github.com/jordans, linkedin.com/in/jordans, jordan@email.com"></textarea>
+      <label>Skills (comma separated)</label>
+      <input id="f-skills" placeholder="React, TypeScript, Figma">
+      <div class="actions">
+        <button class="btn btn-ghost" id="toStep1">← Back</button>
+        <button class="btn btn-primary" id="generateBtn">✨ Generate my portfolio</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="step-3">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <div id="loadStatus">Researching you around the web…</div>
+    </div>
+  </section>
+
+  <section class="step" id="step-4">
+    <div class="preview-shell">
+      <div class="preview-toolbar"><b>Live preview</b><span style="color:var(--muted);font-size:12.5px;" id="sourceNote"></span></div>
+      <div id="previewMount"></div>
+    </div>
+    <div class="final-actions">
+      <button class="btn btn-ghost" id="regenBtn">↻ Regenerate</button>
+      <button class="btn btn-ghost" id="editBtn">🎛️ Edit in Visual Builder</button>
+      <button class="btn btn-primary" id="publishBtn">🚀 Publish</button>
+    </div>
+  </section>
+
+</main>
+
+<div class="modal-backdrop" id="publishModal" hidden>
+  <div class="modal">
+    <div id="pmForm">
+      <h3>Choose your link</h3>
+      <p class="hint" style="color:var(--muted);font-size:13.5px;">This will be your public portfolio URL.</p>
+      <div class="slug-row"><span id="originLabel"></span><input id="slugInput" placeholder="jordan-serrano"></div>
+      <p id="slugMsg"></p>
+      <div class="actions"><button class="btn btn-ghost" id="pmCancel">Cancel</button><button class="btn btn-primary" id="pmConfirm">Publish</button></div>
+    </div>
+    <div id="pmSuccess" hidden class="success-box">
+      <div style="font-size:40px;">🎉</div>
+      <h3>You're live!</h3>
+      <div class="link-pill"><span id="finalLink"></span><button class="copy-btn" id="copyBtn">Copy</button></div>
+      <div class="actions" style="justify-content:center;">
+        <a class="btn btn-ghost" id="viewLive" target="_blank">View live</a>
+        <button class="btn btn-primary" id="pmClose">Keep editing</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= Config ================= */
+const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+const SUPABASE_KEY = "sb_publishable_WciVAE3r35hMRLtZ_rjn5w_3D7lpYFY";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ================= Portfolio render engine (shared across build/editor/portfolio) ================= */
+function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function slugify(s){return (s||'').toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40)||'me';}
+function loadGoogleFont(name){
+  const id='pf-font-'+name.replace(/\s+/g,'-');
+  if(document.getElementById(id))return;
+  const link=document.createElement('link'); link.id=id; link.rel='stylesheet';
+  link.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}:wght@400;600;800&display=swap`;
+  document.head.appendChild(link);
+}
+function setByPath(obj,path,value){
+  const parts=path.split('.'); let cur=obj;
+  for(let i=0;i<parts.length-1;i++){const k=isFinite(parts[i])?Number(parts[i]):parts[i]; if(cur[k]===undefined) cur[k]=isFinite(parts[i+1])?[]:{}; cur=cur[k];}
+  const last=parts[parts.length-1]; cur[isFinite(last)?Number(last):last]=value;
+}
+function renderSection(s,i,editable){
+  if(s.hidden) return '';
+  const anim = s.animation || {trigger:'fadeIn',delayMs:i*120,durationMs:600};
+  const dataAnim = JSON.stringify(anim).replace(/"/g,'&quot;');
+  const ed=(p)=> editable? `contenteditable="true" data-path="${p}" class="editable"`:'';
+  let body='';
+  if(s.type==='projects'){
+    body=`<div class="pf-grid">${(s.items||[]).map((it,j)=>`
+      <div class="pf-card">
+        <h3 ${ed(`sections.${i}.items.${j}.title`)}>${escapeHtml(it.title)}</h3>
+        <p ${ed(`sections.${i}.items.${j}.description`)}>${escapeHtml(it.description)}</p>
+        ${it.tags&&it.tags.length?`<div class="pf-tags">${it.tags.map(t=>`<span class="pf-tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+        ${it.link?`<a class="pf-link" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">View →</a>`:''}
+      </div>`).join('')}</div>`;
+  } else if(s.type==='timeline'){
+    body=`<div class="pf-timeline">${(s.items||[]).map((it,j)=>`
+      <div class="pf-titem">
+        <h3 ${ed(`sections.${i}.items.${j}.title`)}>${escapeHtml(it.title)}</h3>
+        <div class="pf-sub">${escapeHtml(it.subtitle||'')}${it.period?' • '+escapeHtml(it.period):''}</div>
+        <p ${ed(`sections.${i}.items.${j}.description`)}>${escapeHtml(it.description||'')}</p>
+      </div>`).join('')}</div>`;
+  } else if(s.type==='tags'){
+    body=`<div class="pf-tagcloud">${(s.items||[]).map(it=>`<span class="pf-tag">${escapeHtml(it.title)}</span>`).join('')}</div>`;
+  } else if(s.type==='contact'){
+    body=`<div class="pf-contact">${(s.items||[]).map(it=>`<a class="pf-cbtn" href="${escapeHtml(it.link||'#')}" target="_blank" rel="noopener">${escapeHtml(it.title||'Link')}</a>`).join('')}</div>`;
+  } else {
+    body=`<p ${ed(`sections.${i}.body`)}>${escapeHtml(s.body||'')}</p>`;
+  }
+  return `<section class="pf-section reveal-target" data-anim="${dataAnim}" data-section-index="${i}">
+    <h2 ${ed(`sections.${i}.heading`)}>${escapeHtml(s.heading)}</h2>${body}</section>`;
+}
+function renderPortfolio(content, mountEl, opts={}){
+  const editable=!!opts.editable;
+  const t = content.theme||{};
+  loadGoogleFont(t.font||'Inter');
+  mountEl.style.setProperty('--p-primary', t.primary||'#7c5cff');
+  mountEl.style.setProperty('--p-accent', t.accent||'#2dd4ff');
+  mountEl.style.setProperty('--p-bg', t.background||'#0b0f19');
+  mountEl.style.setProperty('--p-font', `'${t.font||'Inter'}'`);
+  const hero=content.hero||{}, about=content.about||{}, sections=content.sections||[];
+  const ed=(p)=> editable? `contenteditable="true" data-path="${p}" class="editable"`:'';
+  mountEl.innerHTML = `
+    <div class="pf-wrap tpl-${content.template||'aurora'}">
+      <header class="pf-hero">
+        <div class="pf-avatar">${escapeHtml(hero.initials||(hero.name||'?').slice(0,2).toUpperCase())}</div>
+        <h1 ${ed('hero.name')}>${escapeHtml(hero.name||'Your Name')}</h1>
+        <p class="pf-tagline" ${ed('hero.tagline')}>${escapeHtml(hero.tagline||'')}</p>
+        ${hero.location?`<p class="pf-loc">📍 <span ${ed('hero.location')}>${escapeHtml(hero.location)}</span></p>`:''}
+      </header>
+      <section class="pf-about reveal-target" data-anim='{"trigger":"fadeIn","delayMs":0,"durationMs":600}'>
+        <h2 ${ed('about.heading')}>${escapeHtml(about.heading||'About')}</h2>
+        <p ${ed('about.body')}>${escapeHtml(about.body||'')}</p>
+      </section>
+      ${sections.map((s,i)=>renderSection(s,i,editable)).join('')}
+    </div>`;
+  if(!opts.skipAnimate) initReveal(mountEl);
+  else mountEl.querySelectorAll('.reveal-target').forEach(el=>el.classList.add('visible'));
+  if(editable) initEditableBindings(mountEl, content, opts.onEdit);
+}
+function initReveal(mount){
+  mount.querySelectorAll('.reveal-target').forEach(el=>{
+    let anim; try{anim=JSON.parse(el.dataset.anim);}catch(e){anim={trigger:'none'};}
+    if(!anim||anim.trigger==='none'){el.classList.add('visible');return;}
+    el.style.setProperty('--dur',(anim.durationMs||600)+'ms');
+    if(anim.trigger==='fadeIn'){
+      const obs=new IntersectionObserver(entries=>{
+        entries.forEach(en=>{ if(en.isIntersecting){ setTimeout(()=>el.classList.add('visible'), anim.delayMs||0); obs.unobserve(el);} });
+      },{threshold:.15});
+      obs.observe(el);
+    } else if(anim.trigger==='fadeOut'){
+      el.classList.add('visible');
+      setTimeout(()=>el.classList.remove('visible'), anim.delayMs||0);
+    }
+  });
+}
+function initEditableBindings(root, content, onEdit){
+  root.querySelectorAll('[data-path]').forEach(el=>{
+    el.addEventListener('input', ()=>{ setByPath(content, el.dataset.path, el.innerText); onEdit&&onEdit(content); });
+  });
+}
+
+/* ================= Wizard logic ================= */
+let session, portfolio=null;
+const stepEls = { 1:document.getElementById('step-1'), 2:document.getElementById('step-2'), 3:document.getElementById('step-3'), 4:document.getElementById('step-4') };
+function goToStep(n){
+  Object.values(stepEls).forEach(s=>s.classList.remove('active'));
+  stepEls[n].classList.add('active');
+  document.querySelectorAll('#dots .dot').forEach(d=>d.classList.toggle('active', Number(d.dataset.step)<=n));
+}
+
+document.getElementById('logoutBtn').onclick = async ()=>{ await supabase.auth.signOut(); location.href='/'; };
+
+(async function init(){
+  const { data:{ session:s } } = await supabase.auth.getSession();
+  if(!s){ location.href='/login'; return; }
+  session = s;
+  const { data } = await supabase.from('portfolios').select('*').eq('user_id', s.user.id).maybeSingle();
+  if(data && data.content && Object.keys(data.content).length){
+    portfolio = data;
+    showPreview(data.content);
+    goToStep(4);
+  }
+})();
+
+const nameI=document.getElementById('f-name'), ageI=document.getElementById('f-age');
+function validateStep1(){ document.getElementById('toStep2').disabled = !(nameI.value.trim() && ageI.value && +ageI.value>0 && +ageI.value<120); }
+nameI.addEventListener('input', validateStep1); ageI.addEventListener('input', validateStep1);
+
+document.getElementById('toStep2').onclick=()=>goToStep(2);
+document.getElementById('toStep1').onclick=()=>goToStep(1);
+
+document.getElementById('generateBtn').onclick = async ()=>{
+  const name = nameI.value.trim(), age = Number(ageI.value);
+  const location = document.getElementById('f-location').value.trim();
+  const bio = document.getElementById('f-bio').value.trim();
+  const school = document.getElementById('f-school').value.trim();
+  const projectsText = document.getElementById('f-projects').value.trim();
+  const links = document.getElementById('f-links').value.trim();
+  const skills = document.getElementById('f-skills').value.trim();
+
+  goToStep(3);
+  const statusEl = document.getElementById('loadStatus');
+  const cycle = (msgs)=>{ let i=0; statusEl.textContent=msgs[0]; return setInterval(()=>{ i=(i+1)%msgs.length; statusEl.style.opacity=0; setTimeout(()=>{statusEl.textContent=msgs[i]; statusEl.style.opacity=1;},250); }, 1800); };
+  const timer = cycle(['Researching you around the web…','Reading through the results…','Thinking (medium reasoning)…','Writing your story…','Almost done…']);
+
+  try{
+    const enrichRes = await fetch('/api/enrich', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, location, extra:{school, skills}})}).then(r=>r.json()).catch(()=>({results:[]}));
+    const genRes = await fetch('/api/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, age, location, bio, school, projectsText, links, skills, enriched: enrichRes.results||[]})}).then(r=>r.json());
+    clearInterval(timer);
+    if(genRes.error){ alert(genRes.error); goToStep(2); return; }
+    const content = genRes.content;
+    const payload = { user_id: session.user.id, name, age, location, raw_input:{bio,school,projectsText,links,skills}, enriched: enrichRes.results||[], content, status:'draft' };
+    const { data, error } = await supabase.from('portfolios').upsert(payload, { onConflict:'user_id' }).select().single();
+    if(error){ alert('Could not save your portfolio: '+error.message); goToStep(2); return; }
+    portfolio = data;
+    document.getElementById('sourceNote').textContent = genRes.source==='gemini' ? '' : '(offline template — add GEMINI_API_KEY for AI generation)';
+    showPreview(content);
+    goToStep(4);
+  }catch(e){
+    clearInterval(timer);
+    alert('Something went wrong: '+e.message);
+    goToStep(2);
+  }
+};
+
+function showPreview(content){ renderPortfolio(content, document.getElementById('previewMount'), {editable:false}); }
+
+document.getElementById('regenBtn').onclick = ()=> goToStep(2);
+document.getElementById('editBtn').onclick = ()=> location.href = `/editor?id=${portfolio.id}`;
+
+/* Publish modal */
+const modal=document.getElementById('publishModal');
+document.getElementById('publishBtn').onclick = ()=>{
+  document.getElementById('originLabel').textContent = location.origin + '/portfolio?name=';
+  document.getElementById('slugInput').value = portfolio.slug || slugify(portfolio.name);
+  document.getElementById('pmForm').hidden=false; document.getElementById('pmSuccess').hidden=true;
+  modal.hidden=false;
+};
+document.getElementById('pmCancel').onclick = ()=> modal.hidden=true;
+document.getElementById('pmClose').onclick = ()=> modal.hidden=true;
+
+document.getElementById('pmConfirm').onclick = async ()=>{
+  let slug = slugify(document.getElementById('slugInput').value);
+  const msg = document.getElementById('slugMsg'); msg.textContent='Publishing…'; msg.className='';
+  let attempt=0, lastErr=null;
+  while(attempt<5){
+    const trySlug = attempt===0? slug : `${slug}-${Math.random().toString(36).slice(2,6)}`;
+    const { data, error } = await supabase.from('portfolios').update({ slug: trySlug, status:'published' }).eq('id', portfolio.id).select().single();
+    if(!error){ portfolio = data; showSuccess(trySlug); return; }
+    if(error.code === '23505'){ attempt++; lastErr=error; continue; }
+    msg.textContent = error.message; msg.className='bad'; return;
+  }
+  msg.textContent = 'That link is taken, try another name.'; msg.className='bad';
+};
+
+function showSuccess(slug){
+  const url = `${location.origin}/portfolio?name=${slug}`;
+  document.getElementById('finalLink').textContent = url;
+  document.getElementById('viewLive').href = url;
+  document.getElementById('pmForm').hidden=true; document.getElementById('pmSuccess').hidden=false;
+}
+document.getElementById('copyBtn').onclick = ()=>{ navigator.clipboard.writeText(document.getElementById('finalLink').textContent); document.getElementById('copyBtn').textContent='Copied!'; setTimeout(()=>document.getElementById('copyBtn').textContent='Copy',1500); };
+</script>
+</body>
+</html>
