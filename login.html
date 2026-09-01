@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Log in · Folyo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--bg:#0a0e18;--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.09);--text:#eef1ff;--muted:#9aa4c7;--a1:#7c5cff;--a2:#2dd4ff;}
+  *{box-sizing:border-box;}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;
+    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.35;animation:float 16s ease-in-out infinite;}
+  .b1{width:480px;height:480px;background:var(--a1);top:-160px;left:-160px;}
+  .b2{width:420px;height:420px;background:var(--a2);bottom:-160px;right:-160px;animation-delay:-8s;}
+  @keyframes float{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,-30px);}}
+  .brand-corner{position:fixed;top:24px;left:28px;font-weight:800;text-decoration:none;color:var(--text);font-size:18px;}
+  .brand-corner span{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;color:transparent;}
+  .auth-card{position:relative;z-index:1;width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);
+    border-radius:22px;padding:38px 34px;backdrop-filter:blur(12px);box-shadow:0 30px 70px -30px rgba(0,0,0,.6);}
+  h1{margin:0 0 8px;font-size:24px;font-weight:800;}
+  .sub{margin:0 0 26px;color:var(--muted);font-size:14.5px;}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;}
+  input[type=email]{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);
+    background:rgba(255,255,255,.04);color:var(--text);font-size:15px;margin-bottom:16px;font-family:inherit;}
+  input[type=email]:focus{outline:none;border-color:var(--a2);}
+  button{width:100%;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:15px;border-radius:12px;
+    padding:13px;background:linear-gradient(120deg,var(--a1),var(--a2));color:#0a0e18;transition:opacity .2s;}
+  button:disabled{opacity:.6;cursor:not-allowed;}
+  button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);margin-top:14px;}
+  .check{font-size:40px;text-align:center;margin-bottom:14px;}
+  #sentState p{text-align:center;color:var(--muted);font-size:14px;line-height:1.6;}
+  .error{color:#ff8a8a;font-size:13.5px;margin-top:14px;text-align:center;}
+</style>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <a href="/" class="brand-corner">✦ Fol<span>yo</span></a>
+
+  <main class="auth-card">
+    <h1>Welcome to Folyo</h1>
+    <p class="sub">Sign in with just your email — no passwords, ever.</p>
+
+    <form id="loginForm">
+      <label for="email">Email address</label>
+      <input id="email" type="email" required placeholder="you@example.com" autocomplete="email">
+      <button type="submit" id="sendBtn">Send magic link</button>
+    </form>
+
+    <div id="sentState" hidden>
+      <div class="check">✉️</div>
+      <p>We sent a login link to <strong id="sentEmail"></strong>.<br>Click it to continue — we'll pick up your session automatically.</p>
+      <button id="resendBtn" class="ghost" disabled>Resend in <span id="cooldown">30</span>s</button>
+    </div>
+    <p id="errMsg" class="error" hidden></p>
+  </main>
+
+<script>
+  // ---- Config: replace with your Supabase project URL ----
+  const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_WciVAE3r35hMRLtZ_rjn5w_3D7lpYFY";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  (async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) location.href = '/build';
+  })();
+
+  const form = document.getElementById('loginForm');
+  const sendBtn = document.getElementById('sendBtn');
+  const sentState = document.getElementById('sentState');
+  const errMsg = document.getElementById('errMsg');
+  const resendBtn = document.getElementById('resendBtn');
+  let cooldownTimer = null;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errMsg.hidden = true;
+    const email = document.getElementById('email').value.trim();
+    if (!email) return;
+    sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + '/build' }
+    });
+    sendBtn.disabled = false; sendBtn.textContent = 'Send magic link';
+    if (error) { errMsg.textContent = error.message; errMsg.hidden = false; return; }
+    document.getElementById('sentEmail').textContent = email;
+    form.hidden = true; sentState.hidden = false;
+    startCooldown();
+  });
+
+  function startCooldown() {
+    let s = 30;
+    const el = document.getElementById('cooldown');
+    resendBtn.disabled = true; resendBtn.textContent = 'Resend in ';
+    resendBtn.appendChild(el);
+    clearInterval(cooldownTimer);
+    cooldownTimer = setInterval(() => {
+      s--; el.textContent = s;
+      if (s <= 0) { clearInterval(cooldownTimer); resendBtn.disabled = false; resendBtn.textContent = 'Resend magic link'; }
+    }, 1000);
+  }
+
+  resendBtn.addEventListener('click', () => { form.hidden = false; sentState.hidden = true; });
+
+  supabase.auth.onAuthStateChange((_event, session) => { if (session) location.href = '/build'; });
+</script>
+</body>
+</html>
